@@ -79,7 +79,7 @@ Four EduOM_PrevObject(
     Object *obj;		/* a pointer to the Object */
     SlottedPage *catPage;	/* buffer page containing the catalog object */
     sm_CatOverlayForData *catEntry; /* overlay structure for catalog object access */
-
+    PhysicalFileID pFid;
 
 
     /*@ parameter checking */
@@ -87,7 +87,58 @@ Four EduOM_PrevObject(
     
     if (prevOID == NULL) ERR(eBADOBJECTID_OM);
 
-    
+    // Read
+    e = BfM_GetTrain((TrainID*)catObjForFile, (char**)&catPage, PAGE_BUF);
+    if (e < 0) ERR(e);
+    GET_PTR_TO_CATENTRY_FOR_DATA(catObjForFile, catPage, catEntry);
+    MAKE_PHYSICALFILEID(pFid, catEntry->fid.volNo, catEntry->lastPage);
+
+    // curOID is NULL, return the last object in the slot array 
+    if (curOID == NULL) {
+        pageNo = catEntry->lastPage;
+        if (pageNo != NULL) {
+            MAKE_PAGEID(pid, pFid.volNo, pageNo);
+            e = BfM_GetTrain((TrainID*)&pid, (char**)&apage, PAGE_BUF);
+            if(e < 0) ERR(e);
+
+            prevOID->pageNo = pageNo;
+            prevOID->volNo = pid.volNo;
+            prevOID->slotNo = apage->header.nSlots - 1;
+            prevOID->unique = apage->slot[-prevOID->slotNo].unique;
+        }
+    }
+    else { // curOID is not NULL, find the the corresponding object and return the previous one.
+        MAKE_PAGEID(pid, curOID->volNo, curOID->pageNo);
+        e = BfM_GetTrain((TrainID*)&pid, (char**)&apage, PAGE_BUF);
+        if (e < 0) ERR(e);
+
+        if (curOID->slotNo == 0) {
+            if (apage->header.pid.pageNo != catEntry->firstPage) {
+                pageNo = apage->header.prevPage;
+                e = BfM_FreeTrain((TrainID*)&pid, PAGE_BUF);
+                if (e < 0) ERR(e);
+                pid.pageNo = pageNo;
+                e = BfM_GetTrain((TrainID*)&pid, (char**)&apage, PAGE_BUF);
+                if (e < 0) ERR(e);
+                prevOID->pageNo = pageNo;
+                prevOID->slotNo = apage->header.nSlots - 1;
+                prevOID->volNo = curOID->volNo;
+                prevOID->unique = apage->slot[-prevOID->slotNo].unique;
+            }
+        }
+        else {
+            prevOID->pageNo = curOID->pageNo;
+            prevOID->volNo = curOID->volNo;
+            prevOID->slotNo = curOID->slotNo - 1;
+            prevOID->unique = apage->slot[-prevOID->slotNo].unique;
+        }
+    }
+
+    e = BfM_FreeTrain((TrainID*)&pid, PAGE_BUF);
+    if(e < 0) ERR(e);
+
+    e = BfM_FreeTrain((TrainID*)catObjForFile, PAGE_BUF);
+    if(e < 0) ERR(e);
 
     return(EOS);
     

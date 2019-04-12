@@ -34,13 +34,10 @@
  *  Four EduOM_CompactPage(SlottedPage*, Two)
  */
 
-
 #include <string.h>
 #include "EduOM_common.h"
 #include "LOT.h"
 #include "EduOM_Internal.h"
-
-
 
 /*@================================
  * EduOM_CompactPage()
@@ -77,18 +74,52 @@
  *  The slotted page is reorganized to comact the space.
  */
 Four EduOM_CompactPage(
-    SlottedPage	*apage,		/* IN slotted page to compact */
-    Two         slotNo)		/* IN slotNo to go to the end */
+    SlottedPage *apage, /* IN slotted page to compact */
+    Two slotNo)         /* IN slotNo to go to the end */
 {
-    SlottedPage	tpage;		/* temporay page used to save the given page */
-    Object *obj;		/* pointer to the object in the data area */
-    Two    apageDataOffset;	/* where the next object is to be moved */
-    Four   len;			/* length of object + length of ObjectHdr */
-    Two    lastSlot;		/* last non empty slot */
-    Two    i;			/* index variable */
+    SlottedPage tpage;   /* temporay page used to save the given page */
+    Object *obj;         /* pointer to the object in the data area */
+    Two apageDataOffset; /* where the next object is to be moved */
+    Four len;            /* length of object + length of ObjectHdr */
+    Two lastSlot;        /* last non empty slot */
+    Two i;               /* index variable */
 
-    
+    // Save to a temporary page
+    tpage = *apage;
 
-    return(eNOERROR);
-    
+    apageDataOffset = 0;
+    lastSlot = apage->header.nSlots;
+
+    // Store all objects in a page continuously from the front
+    for (i = 0; i < lastSlot; i++)
+    {
+        if (slotNo == i || tpage.slot[-i].offset == EMPTYSLOT)
+            continue;
+        // For each non empty slot
+        // Fill the page
+        obj = &(tpage.data[tpage.slot[-i].offset]);
+        len = ALIGNED_LENGTH(obj->header.length) + sizeof(ObjectHdr);
+        memcpy(&(apage->data[apageDataOffset]), (char *)obj, len);
+        //Update offset
+        apage->slot[-i].offset = apageDataOffset;
+        // Point to the next position
+        apageDataOffset += len;
+    }
+
+    // If slotNO is not NIL, leave objects corresponding to slot numbers as the last.
+    if (slotNo != NIL)
+    {
+        obj = &(tpage.data[tpage.slot[-slotNo].offset]);
+        len = ALIGNED_LENGTH(obj->header.length) + sizeof(ObjectHdr);
+        memcpy(&(apage->data[apageDataOffset]), (char *)obj, len);
+        apage->slot[-slotNo].offset = apageDataOffset;
+        apageDataOffset += len;
+    }
+
+    // Update page header
+    apage->header.free = apageDataOffset;
+    apage->header.unused = 0;
+
+    return (eNOERROR);
+
 } /* EduOM_CompactPage */

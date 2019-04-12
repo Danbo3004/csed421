@@ -108,7 +108,23 @@ Four EduOM_ReadObject(
     
     if (buf == NULL) ERR(eBADUSERBUF_OM);
 
-    
+    if (start < 0) ERR(eBADSTART_OM);
+
+    //  Read the slotted page
+    MAKE_PAGEID(pid, oid->volNo, oid->pageNo);
+    e = BfM_GetTrain((TrainID*)&pid, (char**)&apage, PAGE_BUF);
+    if (e < 0) ERR(e);
+
+    // Get the object
+    offset = apage->slot[-(oid->slotNo)].offset;
+    obj = (Object*)&(apage->data[offset]);
+
+    // Read 'length' data from 'start'. If length == REMAINDER, read to the end
+    if (length == REMAINDER) length = obj->header.length;
+    memcpy(buf, &(obj->data[start]), length);
+
+    e = BfM_FreeTrain((TrainID*)&pid, PAGE_BUF);
+    if (e < 0) ERR(e);
 
     return(length);
     
