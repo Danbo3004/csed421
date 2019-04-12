@@ -23,65 +23,72 @@
 /*                                                                            */
 /******************************************************************************/
 /*
- * Module: EduBfM_FreeTrain.c
+ * Module: EduOM_PrevObject.c
  *
- * Description :
- *  Free(or unfix) a buffer.
+ * Description: 
+ *  Return the previous object of the given current object.
  *
  * Exports:
- *  Four EduBfM_FreeTrain(TrainID *, Four)
+ *  Four EduOM_PrevObject(ObjectID*, ObjectID*, ObjectID*, ObjectHdr*)
  */
 
 
-#include "EduBfM_common.h"
-#include "EduBfM_Internal.h"
-
-
+#include "EduOM_common.h"
+#include "BfM.h"
+#include "EduOM_Internal.h"
 
 /*@================================
- * EduBfM_FreeTrain()
+ * EduOM_PrevObject()
  *================================*/
 /*
- * Function: Four EduBfM_FreeTrain(TrainID*, Four)
+ * Function: Four EduOM_PrevObject(ObjectID*, ObjectID*, ObjectID*, ObjectHdr*)
  *
- * Description :
- * (Following description is for original ODYSSEUS/COSMOS BfM.
- *  For ODYSSEUS/EduCOSMOS EduBfM, refer to the EduBfM project manual.)
+ * Description: 
+ * (Following description is for original ODYSSEUS/COSMOS OM.
+ *  For ODYSSEUS/EduCOSMOS EduOM, refer to the EduOM project manual.)
  *
- *  Free(or unfix) a buffer.
- *  This function simply frees a buffer by decrementing the fix count by 1.
+ *  Return the previous object of the given current object. Find the object in
+ *  the same page which has the current object and  if there  is no previous
+ *  object in the same page, find it from the previous page.
+ *  If the current object is NULL, return the last object of the file.
  *
- * Returns :
+ * Returns:
  *  error code
- *    eBADBUFFERTYPE_BFM - bad buffer type
- *    some errors caused by fuction calls
+ *    eBADCATALOGOBJECT_OM
+ *    eBADOBJECTID_OM
+ *    some errors caused by function calls
+ *
+ * Side effect:
+ *  1) parameter prevOID
+ *     prevOID is filled with the previous object's identifier
+ *  2) parameter objHdr
+ *     objHdr is filled with the previous object's header
  */
-Four EduBfM_FreeTrain( 
-    TrainID             *trainId,       /* IN train to be freed */
-    Four                type)           /* IN buffer type */
+Four EduOM_PrevObject(
+    ObjectID *catObjForFile,	/* IN informations about a data file */
+    ObjectID *curOID,		/* IN a ObjectID of the current object */
+    ObjectID *prevOID,		/* OUT the previous object of a current object */
+    ObjectHdr*objHdr)		/* OUT the object header of previous object */
 {
-    Four                index;          /* index on buffer holding the train */
-    Four        e;      /* error code */
+    Four e;			/* error */
+    Two  i;			/* index */
+    Four offset;		/* starting offset of object within a page */
+    PageID pid;			/* a page identifier */
+    PageNo pageNo;		/* a temporary var for previous page's PageNo */
+    SlottedPage *apage;		/* a pointer to the data page */
+    Object *obj;		/* a pointer to the Object */
+    SlottedPage *catPage;	/* buffer page containing the catalog object */
+    sm_CatOverlayForData *catEntry; /* overlay structure for catalog object access */
 
-    /*@ check if the parameter is valid. */
-    if (IS_BAD_BUFFERTYPE(type)) ERR(eBADBUFFERTYPE_BFM);
-    
-    e = eNOERROR;
-    index = edubfm_LookUp((BfMHashKey*)trainId, type);
 
-    if (index < 0) {
-        e = index;
-    }
-    else {
-        if (BI_FIXED(type,index) > 0) {
-            BI_FIXED(type,index)--;
-        }
-        else {
-            printf("fixed counter is less than 0\n");
-            printf("trainid = {%d, %d}\n", trainId->volNo, trainId->pageNo);
-        }
-    }
+
+    /*@ parameter checking */
+    if (catObjForFile == NULL) ERR(eBADCATALOGOBJECT_OM);
     
-    return e;
+    if (prevOID == NULL) ERR(eBADOBJECTID_OM);
+
     
-} /* EduBfM_FreeTrain() */
+
+    return(EOS);
+    
+} /* EduOM_PrevObject() */

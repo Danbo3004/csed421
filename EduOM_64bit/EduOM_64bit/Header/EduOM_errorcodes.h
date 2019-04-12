@@ -23,65 +23,27 @@
 /*                                                                            */
 /******************************************************************************/
 /*
- * Module: EduBfM_FreeTrain.c
- *
- * Description :
- *  Free(or unfix) a buffer.
- *
- * Exports:
- *  Four EduBfM_FreeTrain(TrainID *, Four)
+ * Macro Definitions
  */
+#define ERR_ENCODE_ERROR_CODE(base,no)      ( -1 * (((base) << 16) | no) )
 
-
-#include "EduBfM_common.h"
-#include "EduBfM_Internal.h"
-
-
-
-/*@================================
- * EduBfM_FreeTrain()
- *================================*/
 /*
- * Function: Four EduBfM_FreeTrain(TrainID*, Four)
- *
- * Description :
- * (Following description is for original ODYSSEUS/COSMOS BfM.
- *  For ODYSSEUS/EduCOSMOS EduBfM, refer to the EduBfM project manual.)
- *
- *  Free(or unfix) a buffer.
- *  This function simply frees a buffer by decrementing the fix count by 1.
- *
- * Returns :
- *  error code
- *    eBADBUFFERTYPE_BFM - bad buffer type
- *    some errors caused by fuction calls
+ * Error Base Definitions
  */
-Four EduBfM_FreeTrain( 
-    TrainID             *trainId,       /* IN train to be freed */
-    Four                type)           /* IN buffer type */
-{
-    Four                index;          /* index on buffer holding the train */
-    Four        e;      /* error code */
+#define OM_ERR_BASE                              6
 
-    /*@ check if the parameter is valid. */
-    if (IS_BAD_BUFFERTYPE(type)) ERR(eBADBUFFERTYPE_BFM);
-    
-    e = eNOERROR;
-    index = edubfm_LookUp((BfMHashKey*)trainId, type);
-
-    if (index < 0) {
-        e = index;
-    }
-    else {
-        if (BI_FIXED(type,index) > 0) {
-            BI_FIXED(type,index)--;
-        }
-        else {
-            printf("fixed counter is less than 0\n");
-            printf("trainid = {%d, %d}\n", trainId->volNo, trainId->pageNo);
-        }
-    }
-    
-    return e;
-    
-} /* EduBfM_FreeTrain() */
+/*
+ * Error Definitions for OM_ERR_BASE
+ */
+#define eBADPARAMETER_OM                         ERR_ENCODE_ERROR_CODE(OM_ERR_BASE,0)
+#define eBADOBJECTID_OM                          ERR_ENCODE_ERROR_CODE(OM_ERR_BASE,1)
+#define eBADCATALOGOBJECT_OM                     ERR_ENCODE_ERROR_CODE(OM_ERR_BASE,2)
+#define eBADLENGTH_OM                            ERR_ENCODE_ERROR_CODE(OM_ERR_BASE,3)
+#define eBADSTART_OM                             ERR_ENCODE_ERROR_CODE(OM_ERR_BASE,4)
+#define eBADFILEID_OM                            ERR_ENCODE_ERROR_CODE(OM_ERR_BASE,5)
+#define eBADUSERBUF_OM                           ERR_ENCODE_ERROR_CODE(OM_ERR_BASE,6)
+#define eBADPAGEID_OM                            ERR_ENCODE_ERROR_CODE(OM_ERR_BASE,7)
+#define eTOOLARGESORTKEY_OM                      ERR_ENCODE_ERROR_CODE(OM_ERR_BASE,8)
+#define eCANTALLOCEXTENT_BL_OM                   ERR_ENCODE_ERROR_CODE(OM_ERR_BASE,9)
+#define NUM_ERRORS_OM_ERR_BASE                   10
+#define eNOTSUPPORTED_EDUOM			             ERR_ENCODE_ERROR_CODE(OM_ERR_BASE,11)

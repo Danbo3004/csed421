@@ -22,66 +22,58 @@
 /*    without prior written permission of the copyright owner.                */
 /*                                                                            */
 /******************************************************************************/
+#ifndef _EDUOM_TESTMODULE_H_
+#define _EDUOM_TESTMODULE_H_
+
+
+#include "BfM.h"
+#include "Util_pool.h"
+
+
+
 /*
- * Module: EduBfM_FreeTrain.c
- *
- * Description :
- *  Free(or unfix) a buffer.
- *
- * Exports:
- *  Four EduBfM_FreeTrain(TrainID *, Four)
+ * Definition for EduOM Test Module
  */
+#define MAX_DEVICES_IN_VOLUME 20
+#define FIRST_PAGE_OBJECT 84
+#define THIRD_PAGE_OBJECT 170
+#define ARRAYINDEX 0
+#define SET_DUMP_PAGE(oid)  (dumpPage.volNo = oid.volNo, dumpPage.pageNo = oid.pageNo)
 
 
-#include "EduBfM_common.h"
-#include "EduBfM_Internal.h"
+DeallocListElem dlHead;
+extern Pool dlPool;
 
 
-
-/*@================================
- * EduBfM_FreeTrain()
- *================================*/
 /*
- * Function: Four EduBfM_FreeTrain(TrainID*, Four)
- *
- * Description :
- * (Following description is for original ODYSSEUS/COSMOS BfM.
- *  For ODYSSEUS/EduCOSMOS EduBfM, refer to the EduBfM project manual.)
- *
- *  Free(or unfix) a buffer.
- *  This function simply frees a buffer by decrementing the fix count by 1.
- *
- * Returns :
- *  error code
- *    eBADBUFFERTYPE_BFM - bad buffer type
- *    some errors caused by fuction calls
+ * Type Definition about transaction
  */
-Four EduBfM_FreeTrain( 
-    TrainID             *trainId,       /* IN train to be freed */
-    Four                type)           /* IN buffer type */
-{
-    Four                index;          /* index on buffer holding the train */
-    Four        e;      /* error code */
+typedef struct {        /* 8 byte unsigned integer */
+    UFour high;
+    UFour low;
+} XactID;
 
-    /*@ check if the parameter is valid. */
-    if (IS_BAD_BUFFERTYPE(type)) ERR(eBADBUFFERTYPE_BFM);
-    
-    e = eNOERROR;
-    index = edubfm_LookUp((BfMHashKey*)trainId, type);
+typedef enum { X_BROWSE_BROWSE, X_CS_BROWSE, X_CS_CS, X_RR_BROWSE, X_RR_CS, X_RR_RR } ConcurrencyLevel; /* isolation degree */
 
-    if (index < 0) {
-        e = index;
-    }
-    else {
-        if (BI_FIXED(type,index) > 0) {
-            BI_FIXED(type,index)--;
-        }
-        else {
-            printf("fixed counter is less than 0\n");
-            printf("trainid = {%d, %d}\n", trainId->volNo, trainId->pageNo);
-        }
-    }
-    
-    return e;
-    
-} /* EduBfM_FreeTrain() */
+
+/*@
+ * Function Prototypes
+ */
+/* Interface Function Prototypes */
+Four LRDS_Init(void);
+Four LRDS_AllocHandle(Four*);
+Four LRDS_FormatDataVolume(Four, char**, char*, Four, Two, Four*, Four);
+Four LRDS_Mount(Four, char**, Four*);
+Four LRDS_BeginTransaction(XactID*, ConcurrencyLevel); /* COOKIE09NOV1999 */
+Four LRDS_CommitTransaction(XactID*);
+Four LRDS_AbortTransaction(XactID*);
+Four LRDS_Dismount(Four);
+Four LRDS_FreeHandle(Four);
+Four LRDS_Final(void);
+
+Four RDsM_AllocTrains(Four, Four, PageID *, Two, Four, Two, PageID *);
+
+Four EduOM_Test(Four, Four);
+
+
+#endif /* _EDUOM_TESTMODULE_H_ */

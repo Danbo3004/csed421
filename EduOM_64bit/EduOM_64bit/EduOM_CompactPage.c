@@ -23,65 +23,72 @@
 /*                                                                            */
 /******************************************************************************/
 /*
- * Module: EduBfM_FreeTrain.c
- *
- * Description :
- *  Free(or unfix) a buffer.
+ * Module : EduOM_CompactPage.c
+ * 
+ * Description : 
+ *  EduOM_CompactPage() reorganizes the page to make sure the unused bytes
+ *  in the page are located contiguously "in the middle", between the tuples
+ *  and the slot array. 
  *
  * Exports:
- *  Four EduBfM_FreeTrain(TrainID *, Four)
+ *  Four EduOM_CompactPage(SlottedPage*, Two)
  */
 
 
-#include "EduBfM_common.h"
-#include "EduBfM_Internal.h"
+#include <string.h>
+#include "EduOM_common.h"
+#include "LOT.h"
+#include "EduOM_Internal.h"
 
 
 
 /*@================================
- * EduBfM_FreeTrain()
+ * EduOM_CompactPage()
  *================================*/
 /*
- * Function: Four EduBfM_FreeTrain(TrainID*, Four)
+ * Function: Four EduOM_CompactPage(SlottedPage*, Two)
+ * 
+ * Description : 
+ * (Following description is for original ODYSSEUS/COSMOS OM.
+ *  For ODYSSEUS/EduCOSMOS EduOM, refer to the EduOM project manual.)
  *
- * Description :
- * (Following description is for original ODYSSEUS/COSMOS BfM.
- *  For ODYSSEUS/EduCOSMOS EduBfM, refer to the EduBfM project manual.)
+ *  (1) What to do?
+ *  EduOM_CompactPage() reorganizes the page to make sure the unused bytes
+ *  in the page are located contiguously "in the middle", between the tuples
+ *  and the slot array. To compress out holes, objects must be moved toward
+ *  the beginning of the page.
  *
- *  Free(or unfix) a buffer.
- *  This function simply frees a buffer by decrementing the fix count by 1.
- *
- * Returns :
+ *  (2) How to do?
+ *  a. Save the given page into the temporary page
+ *  b. FOR each nonempty slot DO
+ *	Fill the original page by copying the object from the saved page
+ *          to the data area of original page pointed by 'apageDataOffset'
+ *	Update the slot offset
+ *	Get 'apageDataOffet' to point the next moved position
+ *     ENDFOR
+ *   c. Update the 'freeStart' and 'unused' field of the page
+ *   d. Return
+ *	
+ * Returns:
  *  error code
- *    eBADBUFFERTYPE_BFM - bad buffer type
- *    some errors caused by fuction calls
+ *    eNOERROR
+ *
+ * Side Effects :
+ *  The slotted page is reorganized to comact the space.
  */
-Four EduBfM_FreeTrain( 
-    TrainID             *trainId,       /* IN train to be freed */
-    Four                type)           /* IN buffer type */
+Four EduOM_CompactPage(
+    SlottedPage	*apage,		/* IN slotted page to compact */
+    Two         slotNo)		/* IN slotNo to go to the end */
 {
-    Four                index;          /* index on buffer holding the train */
-    Four        e;      /* error code */
+    SlottedPage	tpage;		/* temporay page used to save the given page */
+    Object *obj;		/* pointer to the object in the data area */
+    Two    apageDataOffset;	/* where the next object is to be moved */
+    Four   len;			/* length of object + length of ObjectHdr */
+    Two    lastSlot;		/* last non empty slot */
+    Two    i;			/* index variable */
 
-    /*@ check if the parameter is valid. */
-    if (IS_BAD_BUFFERTYPE(type)) ERR(eBADBUFFERTYPE_BFM);
     
-    e = eNOERROR;
-    index = edubfm_LookUp((BfMHashKey*)trainId, type);
 
-    if (index < 0) {
-        e = index;
-    }
-    else {
-        if (BI_FIXED(type,index) > 0) {
-            BI_FIXED(type,index)--;
-        }
-        else {
-            printf("fixed counter is less than 0\n");
-            printf("trainid = {%d, %d}\n", trainId->volNo, trainId->pageNo);
-        }
-    }
+    return(eNOERROR);
     
-    return e;
-    
-} /* EduBfM_FreeTrain() */
+} /* EduOM_CompactPage */

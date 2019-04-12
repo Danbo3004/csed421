@@ -22,66 +22,27 @@
 /*    without prior written permission of the copyright owner.                */
 /*                                                                            */
 /******************************************************************************/
-/*
- * Module: EduBfM_FreeTrain.c
- *
- * Description :
- *  Free(or unfix) a buffer.
- *
- * Exports:
- *  Four EduBfM_FreeTrain(TrainID *, Four)
+#ifndef _EDUOM_H_
+#define _EDUOM_H_
+
+
+#include "EduOM_Internal.h"
+#include "Util_pool.h"
+
+
+
+/*@
+ * Function Prototypes
  */
+/* Interface Function Prototypes */
+Four EduOM_CompactPage(SlottedPage*, Two);
+Four EduOM_CreateObject(ObjectID*, ObjectID*, ObjectHdr*, Four, void*, ObjectID*);
+Four EduOM_DestroyObject(ObjectID*, ObjectID*, Pool*, DeallocListElem*);
+Four EduOM_NextObject(ObjectID*, ObjectID*, ObjectID*, ObjectHdr*);
+Four EduOM_PrevObject(ObjectID*, ObjectID*, ObjectID*, ObjectHdr*);
+Four EduOM_ReadObject(ObjectID*, Four, Four, void*);
+
+Four OM_DumpObject(ObjectID *);
 
 
-#include "EduBfM_common.h"
-#include "EduBfM_Internal.h"
-
-
-
-/*@================================
- * EduBfM_FreeTrain()
- *================================*/
-/*
- * Function: Four EduBfM_FreeTrain(TrainID*, Four)
- *
- * Description :
- * (Following description is for original ODYSSEUS/COSMOS BfM.
- *  For ODYSSEUS/EduCOSMOS EduBfM, refer to the EduBfM project manual.)
- *
- *  Free(or unfix) a buffer.
- *  This function simply frees a buffer by decrementing the fix count by 1.
- *
- * Returns :
- *  error code
- *    eBADBUFFERTYPE_BFM - bad buffer type
- *    some errors caused by fuction calls
- */
-Four EduBfM_FreeTrain( 
-    TrainID             *trainId,       /* IN train to be freed */
-    Four                type)           /* IN buffer type */
-{
-    Four                index;          /* index on buffer holding the train */
-    Four        e;      /* error code */
-
-    /*@ check if the parameter is valid. */
-    if (IS_BAD_BUFFERTYPE(type)) ERR(eBADBUFFERTYPE_BFM);
-    
-    e = eNOERROR;
-    index = edubfm_LookUp((BfMHashKey*)trainId, type);
-
-    if (index < 0) {
-        e = index;
-    }
-    else {
-        if (BI_FIXED(type,index) > 0) {
-            BI_FIXED(type,index)--;
-        }
-        else {
-            printf("fixed counter is less than 0\n");
-            printf("trainid = {%d, %d}\n", trainId->volNo, trainId->pageNo);
-        }
-    }
-    
-    return e;
-    
-} /* EduBfM_FreeTrain() */
+#endif /* _EDUOM_H_ */

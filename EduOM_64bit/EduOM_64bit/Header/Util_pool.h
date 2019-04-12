@@ -22,66 +22,38 @@
 /*    without prior written permission of the copyright owner.                */
 /*                                                                            */
 /******************************************************************************/
-/*
- * Module: EduBfM_FreeTrain.c
- *
- * Description :
- *  Free(or unfix) a buffer.
- *
- * Exports:
- *  Four EduBfM_FreeTrain(TrainID *, Four)
+#ifndef _UTIL_POOL_H_
+#define _UTIL_POOL_H_
+
+
+/*@
+ * Type Definitions
  */
-
-
-#include "EduBfM_common.h"
-#include "EduBfM_Internal.h"
-
-
-
-/*@================================
- * EduBfM_FreeTrain()
- *================================*/
 /*
- * Function: Four EduBfM_FreeTrain(TrainID*, Four)
- *
- * Description :
- * (Following description is for original ODYSSEUS/COSMOS BfM.
- *  For ODYSSEUS/EduCOSMOS EduBfM, refer to the EduBfM project manual.)
- *
- *  Free(or unfix) a buffer.
- *  This function simply frees a buffer by decrementing the fix count by 1.
- *
- * Returns :
- *  error code
- *    eBADBUFFERTYPE_BFM - bad buffer type
- *    some errors caused by fuction calls
+ * Type Definition for subpool header
+ * For each subpool, a subpool header is defined.
+ * The subpool header is dynamically allocated at once with the subpool.
  */
-Four EduBfM_FreeTrain( 
-    TrainID             *trainId,       /* IN train to be freed */
-    Four                type)           /* IN buffer type */
-{
-    Four                index;          /* index on buffer holding the train */
-    Four        e;      /* error code */
+struct _SubpoolHdr {
+    Four 		count;			/* # of elements in the freed list *//* YRK22JUL2003-2 */
+    char 		*firstElem;		/* pointer to the first freed element */
+						/* freed elements make a linked list. */
+    struct _SubpoolHdr 	*nextSubpool; 		/* pointer to next subpool */
+};
 
-    /*@ check if the parameter is valid. */
-    if (IS_BAD_BUFFERTYPE(type)) ERR(eBADBUFFERTYPE_BFM);
-    
-    e = eNOERROR;
-    index = edubfm_LookUp((BfMHashKey*)trainId, type);
+typedef struct _SubpoolHdr SubpoolHdr;
 
-    if (index < 0) {
-        e = index;
-    }
-    else {
-        if (BI_FIXED(type,index) > 0) {
-            BI_FIXED(type,index)--;
-        }
-        else {
-            printf("fixed counter is less than 0\n");
-            printf("trainid = {%d, %d}\n", trainId->volNo, trainId->pageNo);
-        }
-    }
-    
-    return e;
-    
-} /* EduBfM_FreeTrain() */
+/*
+ * Type definition for Pool.
+ * Pool consists of the subpools of same size.
+ */
+struct _Pool {
+    Four        elemSize;		/* element size *//* YRK22JUL2003-2 */
+    Four        maxElemInSubpool;	/* maximum elements in subpool *//* YRK22JUL2003-2 */
+    SubpoolHdr *subpoolPtr;		/* pointer to the first subpool */
+};
+
+typedef struct _Pool Pool;
+
+
+#endif /* _UTIL_POOL_H_ */

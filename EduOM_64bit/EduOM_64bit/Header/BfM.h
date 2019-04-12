@@ -22,66 +22,22 @@
 /*    without prior written permission of the copyright owner.                */
 /*                                                                            */
 /******************************************************************************/
-/*
- * Module: EduBfM_FreeTrain.c
- *
- * Description :
- *  Free(or unfix) a buffer.
- *
- * Exports:
- *  Four EduBfM_FreeTrain(TrainID *, Four)
+#ifndef _BFM_H_
+#define _BFM_H_
+
+
+/*@
+ * Constant Definitions
  */
+/* Buffer Types */
+#define PAGE_BUF    0
+#define LOT_LEAF_BUF 1
 
 
-#include "EduBfM_common.h"
-#include "EduBfM_Internal.h"
+Four BfM_FreeTrain(TrainID *, Four);
+Four BfM_GetTrain(TrainID *, char **, Four);
+Four BfM_GetNewTrain(TrainID *, char **, Four);
+Four BfM_SetDirty(TrainID *, Four);
 
 
-
-/*@================================
- * EduBfM_FreeTrain()
- *================================*/
-/*
- * Function: Four EduBfM_FreeTrain(TrainID*, Four)
- *
- * Description :
- * (Following description is for original ODYSSEUS/COSMOS BfM.
- *  For ODYSSEUS/EduCOSMOS EduBfM, refer to the EduBfM project manual.)
- *
- *  Free(or unfix) a buffer.
- *  This function simply frees a buffer by decrementing the fix count by 1.
- *
- * Returns :
- *  error code
- *    eBADBUFFERTYPE_BFM - bad buffer type
- *    some errors caused by fuction calls
- */
-Four EduBfM_FreeTrain( 
-    TrainID             *trainId,       /* IN train to be freed */
-    Four                type)           /* IN buffer type */
-{
-    Four                index;          /* index on buffer holding the train */
-    Four        e;      /* error code */
-
-    /*@ check if the parameter is valid. */
-    if (IS_BAD_BUFFERTYPE(type)) ERR(eBADBUFFERTYPE_BFM);
-    
-    e = eNOERROR;
-    index = edubfm_LookUp((BfMHashKey*)trainId, type);
-
-    if (index < 0) {
-        e = index;
-    }
-    else {
-        if (BI_FIXED(type,index) > 0) {
-            BI_FIXED(type,index)--;
-        }
-        else {
-            printf("fixed counter is less than 0\n");
-            printf("trainid = {%d, %d}\n", trainId->volNo, trainId->pageNo);
-        }
-    }
-    
-    return e;
-    
-} /* EduBfM_FreeTrain() */
+#endif /* _BFM_H_ */
